@@ -24,6 +24,6 @@ command line:
 `mvn clean package`
 
 On successful build the runnable jar will be under the project-root/target folder
-To run the jar one will need Java 7 (JRE or JDK) or newer
-command line execution example:
+To run the jar one will need Java 7 (JRE or JDK) or newer.
+Execution example:
 `java -jar snake-1.0.0-SNAPSHOT.jar`
