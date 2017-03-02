@@ -12,6 +12,11 @@ public class Die extends State {
     public boolean isInProgress() {
         return false;
     }
+    
+    @Override
+    public boolean isFastForward() {
+	return false;
+    }
 
     @Override
     public State proceed(Field[][] court, Snake snake) {

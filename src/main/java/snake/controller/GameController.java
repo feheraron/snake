@@ -1,12 +1,16 @@
 package snake.controller;
 
-import javax.swing.Timer;
+import java.lang.reflect.InvocationTargetException;
+import java.util.Timer;
+import java.util.TimerTask;
+
+import javax.swing.SwingUtilities;
+
 import snake.model.Direction;
 import snake.model.Field;
 import snake.model.Snake;
-import snake.model.state.Treat;
 import snake.model.state.State;
-import snake.model.state.Wait;
+import snake.model.state.Treat;
 import snake.view.View;
 
 /**
@@ -17,8 +21,9 @@ public class GameController {
     private Field[][] court;
     private Snake snake;
     private State currentState;
-    private Timer timer;
     private boolean started;
+    private Timer timer;
+    private int delay;
 
     public void init(int width, int height) {
         court = createCourt(width, height);
@@ -26,6 +31,8 @@ public class GameController {
         snake.append(3);
         currentState = new Treat().proceed(court, snake);
         started = false;
+	timer = new Timer();
+	delay = 80;
     }
 
     private Field[][] createCourt(int x, int y) {
@@ -52,19 +59,44 @@ public class GameController {
 
     public void start(final View view) {
         started = true;
-        timer = new Timer(0, view);
         proceed(view);
     }
+        
+    private void proceed(View view) {
+	if (currentState.isInProgress()) {
+	    if(currentState.isFastForward())
+		proceedFastForward(view);
+	    else
+		proceedWait(view);
+	}
+    }
 
-    public void proceed(View view) {
-        currentState = currentState.proceed(court, snake);
-        if (currentState instanceof Wait) {
-            timer.stop();
-            timer = new Timer(100, view);
-        }
-        timer.setDelay(0);
-        timer.setRepeats(false);
-        timer.restart();
+    private void proceedFastForward(final View view) {
+	while (currentState.isFastForward()) {
+	    currentState = currentState.proceed(court, snake);
+	    view.updateScene();
+	    proceed(view);
+	}
+    }
+    
+    private void proceedWait(final View view) {
+	timer.schedule(new TimerTask() {
+	    @Override
+	    public void run() {
+		try {
+		    SwingUtilities.invokeAndWait(new Runnable() {
+			@Override
+			public void run() {
+			    currentState = currentState.proceed(court, snake);
+			    view.updateScene();
+			    proceed(view);
+			}
+		    });
+		} catch (InvocationTargetException | InterruptedException e) {
+		    e.printStackTrace();
+		}
+	    }
+	}, delay);
     }
 
     public boolean isInProgress() {

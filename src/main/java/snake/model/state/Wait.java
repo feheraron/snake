@@ -7,10 +7,10 @@ import snake.model.Snake;
  * @author afeher
  */
 public class Wait extends State {
-
+    
     @Override
-    public int getTimeout() {
-        return 1000;
+    public boolean isFastForward() {
+	return false;
     }
 
     @Override
