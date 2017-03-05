@@ -31,8 +31,8 @@ public class GameController {
         snake.append(3);
         currentState = new Treat().proceed(court, snake);
         started = false;
-	timer = new Timer();
-	delay = 80;
+        timer = new Timer();
+        delay = 40;
     }
 
     private Field[][] createCourt(int x, int y) {
@@ -61,42 +61,42 @@ public class GameController {
         started = true;
         proceed(view);
     }
-        
+
     private void proceed(View view) {
-	if (currentState.isInProgress()) {
-	    if(currentState.isFastForward())
-		proceedFastForward(view);
-	    else
-		proceedWait(view);
-	}
+        view.updateScene();
+        if (isStarted() && isInProgress()) {
+            if (currentState.isFastForward()) {
+                proceedFastForward(view);
+            } else {
+                proceedWait(view);
+            }
+        }
     }
 
     private void proceedFastForward(final View view) {
-	while (currentState.isFastForward()) {
-	    currentState = currentState.proceed(court, snake);
-	    view.updateScene();
-	    proceed(view);
-	}
+        while (currentState.isFastForward()) {
+            currentState = currentState.proceed(court, snake);
+            proceed(view);
+        }
     }
-    
+
     private void proceedWait(final View view) {
-	timer.schedule(new TimerTask() {
-	    @Override
-	    public void run() {
-		try {
-		    SwingUtilities.invokeAndWait(new Runnable() {
-			@Override
-			public void run() {
-			    currentState = currentState.proceed(court, snake);
-			    view.updateScene();
-			    proceed(view);
-			}
-		    });
-		} catch (InvocationTargetException | InterruptedException e) {
-		    e.printStackTrace();
-		}
-	    }
-	}, delay);
+        timer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                try {
+                    SwingUtilities.invokeAndWait(new Runnable() {
+                        @Override
+                        public void run() {
+                            currentState = currentState.proceed(court, snake);
+                            proceed(view);
+                        }
+                    });
+                } catch (InvocationTargetException | InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }, delay);
     }
 
     public boolean isInProgress() {
@@ -106,4 +106,13 @@ public class GameController {
     public boolean isStarted() {
         return started;
     }
+
+    public void togglePause(View view) {
+        if (started) {
+            started = false;
+        } else {
+            start(view);
+        }
+    }
+    
 }

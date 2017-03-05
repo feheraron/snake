@@ -2,10 +2,9 @@ package snake.view;
 
 import java.awt.Color;
 import java.awt.Graphics;
+import java.awt.Image;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.util.ArrayList;
-import java.util.List;
 
 import javax.swing.JFrame;
 
@@ -20,40 +19,41 @@ import snake.model.Snake;
  */
 public class View extends JFrame {
 
-    private int width = 1;
-    private int height = 1;
+    private int widthUnits = 10;
+    private int heightUnits = 10;
     private int scale = 1;
+    private boolean showGrid = false;
+    
     private GameController controller;
-    private List<BodyPart> renderedSnake;
 
-    public View(int width, int height, int scale) {
+    public View(int widthUnits, int heightUnits, int scale) {
 	setTitle("Snake");
-	setWidth(width);
-	setHeight(height);
+	setWidthUnits(widthUnits);
+	setHeightUnits(heightUnits);
 	setScale(scale);
 	setResizable(false);
 	setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-	renderedSnake = new ArrayList<>();
+        setVisible(true);
     }
 
-    private void setWidth(int width) {
-	this.width = width;
+    private void setWidthUnits(int units) {
+	this.widthUnits = units;
 	setScale(scale);
     }
 
-    private void setHeight(int height) {
-	this.height = height;
+    private void setHeightUnits(int units) {
+	this.heightUnits = units;
 	setScale(scale);
     }
 
     private void setScale(int scale) {
 	this.scale = scale;
-	setSize(scale * width, scale * height);
+	setSize(scale * widthUnits, scale * heightUnits);
     }
 
     public void bindController(final GameController controller) {
 	this.controller = controller;
-	controller.init(width, height);
+	controller.init(widthUnits, heightUnits);
 	addKeyListener(new KeyAdapter() {
 	    @Override
 	    public void keyPressed(KeyEvent e) {
@@ -62,89 +62,91 @@ public class View extends JFrame {
 		case KeyEvent.VK_RIGHT: controller.turn(Direction.RIGHT); break;
 		case KeyEvent.VK_DOWN: controller.turn(Direction.DOWN); break;
 		case KeyEvent.VK_LEFT: controller.turn(Direction.LEFT); break;
+                case KeyEvent.VK_ESCAPE: controller.togglePause(View.this); return;
+                case KeyEvent.VK_G: toggleShowGrid(); return;
+                case KeyEvent.VK_N: startNewGame(); return;
 		default:
+                    return;
 		}
 		if (!controller.isStarted()) {
 		    controller.start(View.this);
 		}
 	    }
 	});
-	setVisible(true);
+    }
+    
+    private void startNewGame() {
+        controller.init(widthUnits, heightUnits);
+        updateScene();
+    }
+    
+    private void toggleShowGrid() {
+        showGrid = !showGrid;
+        updateScene();
     }
 
     public void updateScene() {
-	if (controller.isInProgress()) {
-	    draw(controller.getCourt());
-	    draw(controller.getSnake());
-	} else {
-	    setTitle("Snake - GAME OVER");
-	}
+        if (!controller.isInProgress()) {
+            setTitle("Snake - GAME OVER");
+        }
+        final int width = getWidth();
+        final int height = getHeight();
+        Image scene = createImage(width, height);
+        Graphics sceneGraphics = scene.getGraphics();
+        drawBackground(width, height, sceneGraphics);
+        sceneGraphics.setColor(Color.black);
+        draw(controller.getCourt(), sceneGraphics);
+        draw(controller.getSnake(), sceneGraphics);
+        getContentPane().getGraphics().drawImage(scene, 0, 0, this);
     }
 
     @Override
     public void paint(Graphics g) {
-	super.paint(g);
-	if (controller != null) {
-	    draw(controller.getCourt());
-	    draw(controller.getSnake());
-	}
+        super.paint(g);
+        updateScene();
     }
 
-    private void draw(Field[][] court) {
-	Graphics g = getContentPane().getGraphics();
-	for (Field[] rows : court) {
-	    for (Field field : rows) {
-		if (Field.Terrain.FOOD.equals(field.getTerrain())) {
-		    int xOffset = field.getX() * scale;
-		    int yOffset = field.getY() * scale;
-		    g.setColor(Color.gray);
-		    g.fillRect(xOffset, yOffset, scale, scale);
-		}
-	    }
-	}
-	g.dispose();
+    private void draw(Field[][] court, Graphics g) {
+        for (Field[] rows : court) {
+            for (Field field : rows) {
+                int xOffset = field.getX() * scale;
+                int yOffset = field.getY() * scale;
+                if (Field.Terrain.FOOD.equals(field.getTerrain())) {
+                    g.setColor(Color.gray);
+                    g.fillRect(xOffset, yOffset, scale, scale);
+                    g.setColor(Color.black);
+                }
+                if (showGrid) {
+                    g.setColor(Color.black);
+                    g.drawRect(xOffset, yOffset, scale, scale);
+                }
+            }
+        }
     }
 
-    private void draw(Snake snake) {
-	Graphics g = getContentPane().getGraphics();
-	for (BodyPart renderedPart : renderedSnake) {
-	    if (!contains(snake.getBody(), renderedPart))
-		clear(renderedPart, g);
-	}
-	renderedSnake = new ArrayList<>();
-	for (BodyPart bodyPart : snake.getBody()) {
-	    draw(bodyPart, g);
-	    renderedSnake.add(bodyPart.copy());
-	}
-	g.dispose();
+    private void drawBackground(int width, int height, Graphics g) {
+        g.setColor(getBackground());
+        g.fillRect(0, 0, width, height);
     }
 
-    private boolean contains(List<BodyPart> body, BodyPart test) {
-	for (BodyPart bodyPart : body) {
-	    if (bodyPart.getX() == test.getX() && bodyPart.getY() == test.getY())
-		return true;
-	}
-	return false;
+    private void draw(Snake snake, Graphics g) {
+        for (BodyPart bodyPart : snake.getBody()) {
+            draw(bodyPart, g);
+        }
     }
 
     private void draw(BodyPart part, Graphics g) {
-	int xOffset = getOffsetX(part);
-	int yOffset = getOffsetY(part);
-	g.fillRect(xOffset, yOffset, scale, scale);
-    }
-
-    private void clear(BodyPart part, Graphics g) {
-	int xOffset = getOffsetX(part);
-	int yOffset = getOffsetY(part);
-	g.clearRect(xOffset, yOffset, scale, scale);
+        int xOffset = getOffsetX(part);
+        int yOffset = getOffsetY(part);
+        g.fillRect(xOffset, yOffset, scale, scale);
     }
 
     private int getOffsetX(BodyPart part) {
-	return part.getX() * scale;
+        return part.getX() * scale;
     }
 
     private int getOffsetY(BodyPart part) {
-	return part.getY() * scale;
+        return part.getY() * scale;
     }
 
 }
