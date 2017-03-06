@@ -5,7 +5,9 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
+
 import snake.model.BodyPart;
+import snake.model.Direction;
 import snake.model.Field;
 import snake.model.Snake;
 
@@ -15,7 +17,7 @@ import snake.model.Snake;
 public class Treat extends State {
 
     @Override
-    public State proceed(Field[][] court, Snake snake) {
+    public State proceed(Field[][] court, Snake snake, Direction direction) {
         List<Field> available = getAvailableFields(court);
         List<Field> occupied = getOccupiedFields(snake);
         available.removeAll(occupied);

@@ -1,5 +1,6 @@
 package snake.model.state;
 
+import snake.model.Direction;
 import snake.model.Field;
 import snake.model.Snake;
 
@@ -16,6 +17,6 @@ public abstract class State {
 	return true;
     }
 
-    public abstract State proceed(Field[][] court, Snake snake);
+    public abstract State proceed(Field[][] court, Snake snake, Direction direction);
 
 }

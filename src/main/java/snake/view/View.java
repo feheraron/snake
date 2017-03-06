@@ -77,6 +77,7 @@ public class View extends JFrame {
     
     private void startNewGame() {
         controller.init(widthUnits, heightUnits);
+        setTitle("Snake");
         updateScene();
     }
     

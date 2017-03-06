@@ -1,5 +1,6 @@
 package snake.model.state;
 
+import snake.model.Direction;
 import snake.model.Field;
 import snake.model.Snake;
 
@@ -14,7 +15,7 @@ public class Wait extends State {
     }
 
     @Override
-    public State proceed(Field[][] court, Snake snake) {
+    public State proceed(Field[][] court, Snake snake, Direction direction) {
         return new Move();
     }
 

@@ -8,7 +8,6 @@ import java.util.List;
  */
 public class Snake {
 
-    private Direction direction = Direction.UP;
     private List<BodyPart> body = new LinkedList<>();
     private int append = 0;
 
@@ -16,7 +15,7 @@ public class Snake {
         body.add(new BodyPart(0, 0));
     }
 
-    public void move() throws SelfBiteException {
+    public void move(Direction direction) throws SelfBiteException {
         BodyPart tail = body.get(body.size() - 1);
         BodyPart head = getHead();
         BodyPart headAtNewPosition = head.copy();
@@ -55,10 +54,6 @@ public class Snake {
 
     public List<BodyPart> getBody() {
         return body;
-    }
-
-    public void setDirection(Direction direction) {
-        this.direction = direction;
     }
     
 }

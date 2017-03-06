@@ -1,8 +1,10 @@
 package snake.controller;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.Queue;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.LinkedBlockingDeque;
 
 import javax.swing.SwingUtilities;
 
@@ -20,6 +22,7 @@ public class GameController {
 
     private Field[][] court;
     private Snake snake;
+    private Queue<Direction> directions;
     private State currentState;
     private boolean started;
     private Timer timer;
@@ -29,10 +32,11 @@ public class GameController {
         court = createCourt(width, height);
         snake = new Snake();
         snake.append(3);
-        currentState = new Treat().proceed(court, snake);
+        directions = new LinkedBlockingDeque<>();
+        currentState = new Treat().proceed(court, snake, null);
         started = false;
         timer = new Timer();
-        delay = 40;
+        delay = 70;
     }
 
     private Field[][] createCourt(int x, int y) {
@@ -54,7 +58,9 @@ public class GameController {
     }
 
     public void turn(Direction direction) {
-        snake.setDirection(direction);
+	if (directions.isEmpty() || !directions.peek().isOpposite(direction)) {
+	    directions.add(direction);
+	}
     }
 
     public void start(final View view) {
@@ -75,9 +81,16 @@ public class GameController {
 
     private void proceedFastForward(final View view) {
         while (currentState.isFastForward()) {
-            currentState = currentState.proceed(court, snake);
+            currentState = currentState.proceed(court, snake, getDirection());
             proceed(view);
         }
+    }
+
+    private Direction getDirection() {
+	Direction direction = directions.poll();
+	if(directions.isEmpty())
+	    directions.add(direction);
+	return direction;
     }
 
     private void proceedWait(final View view) {
@@ -88,7 +101,7 @@ public class GameController {
                     SwingUtilities.invokeAndWait(new Runnable() {
                         @Override
                         public void run() {
-                            currentState = currentState.proceed(court, snake);
+                            currentState = currentState.proceed(court, snake, getDirection());
                             proceed(view);
                         }
                     });

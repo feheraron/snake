@@ -1,6 +1,7 @@
 package snake.model.state;
 
 import snake.model.BodyPart;
+import snake.model.Direction;
 import snake.model.Field;
 import snake.model.SelfBiteException;
 import snake.model.Snake;
@@ -11,9 +12,9 @@ import snake.model.Snake;
 public class Move extends State {
 
     @Override
-    public State proceed(Field[][] court, Snake snake) {
+    public State proceed(Field[][] court, Snake snake, Direction direction) {
         try {
-            snake.move();
+            snake.move(direction);
             BodyPart head = snake.getHead();
             Field target = court[head.getX()][head.getY()];
             return getNextState(target);
