@@ -9,10 +9,8 @@ import java.awt.event.KeyEvent;
 import javax.swing.JFrame;
 
 import snake.controller.GameController;
-import snake.model.BodyPart;
 import snake.model.Direction;
 import snake.model.Field;
-import snake.model.Snake;
 
 /**
  * @author afeher
@@ -97,7 +95,6 @@ public class View extends JFrame {
         drawBackground(width, height, sceneGraphics);
         sceneGraphics.setColor(Color.black);
         draw(controller.getCourt(), sceneGraphics);
-        draw(controller.getSnake(), sceneGraphics);
         getContentPane().getGraphics().drawImage(scene, 0, 0, this);
     }
 
@@ -112,13 +109,15 @@ public class View extends JFrame {
             for (Field field : rows) {
                 int xOffset = field.getX() * scale;
                 int yOffset = field.getY() * scale;
+                if (Field.Terrain.SNAKE.equals(field.getTerrain())) {
+                    g.fillRect(xOffset, yOffset, scale, scale);
+                }
                 if (Field.Terrain.FOOD.equals(field.getTerrain())) {
                     g.setColor(Color.gray);
                     g.fillRect(xOffset, yOffset, scale, scale);
                     g.setColor(Color.black);
                 }
                 if (showGrid) {
-                    g.setColor(Color.black);
                     g.drawRect(xOffset, yOffset, scale, scale);
                 }
             }
@@ -128,26 +127,6 @@ public class View extends JFrame {
     private void drawBackground(int width, int height, Graphics g) {
         g.setColor(getBackground());
         g.fillRect(0, 0, width, height);
-    }
-
-    private void draw(Snake snake, Graphics g) {
-        for (BodyPart bodyPart : snake.getBody()) {
-            draw(bodyPart, g);
-        }
-    }
-
-    private void draw(BodyPart part, Graphics g) {
-        int xOffset = getOffsetX(part);
-        int yOffset = getOffsetY(part);
-        g.fillRect(xOffset, yOffset, scale, scale);
-    }
-
-    private int getOffsetX(BodyPart part) {
-        return part.getX() * scale;
-    }
-
-    private int getOffsetY(BodyPart part) {
-        return part.getY() * scale;
     }
 
 }

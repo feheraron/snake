@@ -8,32 +8,26 @@ import java.util.List;
  */
 public class Snake {
 
-    private List<BodyPart> body = new LinkedList<>();
-    private int append = 0;
+    private List<BodyPart> body;
+    private int append;
 
     public Snake() {
+        this(new LinkedList<BodyPart>(), 0);
         body.add(new BodyPart(0, 0));
     }
+    
+    private Snake(List<BodyPart> body, int append) {
+        this.body = body;
+        this.append = append;
+    }
 
-    public void move(Direction direction) throws SelfBiteException {
+    public void move(Direction direction) {
         BodyPart tail = body.get(body.size() - 1);
         BodyPart head = getHead();
         BodyPart headAtNewPosition = head.copy();
         headAtNewPosition.move(direction);
-        if (isSelfBiting(headAtNewPosition))
-            throw new SelfBiteException();
         body.add(0, headAtNewPosition);
         keepTailIfAppendingNeeded(tail);
-    }
-    
-    private boolean isSelfBiting(BodyPart headAtNewPosition) {
-        for (BodyPart bodyPart : body) {
-            if (bodyPart.getX() == headAtNewPosition.getX() 
-                    && bodyPart.getY() == headAtNewPosition.getY()) {
-                return true;
-            }
-        }
-        return false;
     }
 
     private void keepTailIfAppendingNeeded(BodyPart tail) {
@@ -54,6 +48,10 @@ public class Snake {
 
     public List<BodyPart> getBody() {
         return body;
+    }
+
+    public Snake copy() {
+        return new Snake(new LinkedList(body), append);
     }
     
 }

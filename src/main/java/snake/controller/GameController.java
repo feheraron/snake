@@ -1,18 +1,15 @@
 package snake.controller;
 
 import java.lang.reflect.InvocationTargetException;
-import java.util.Queue;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.concurrent.LinkedBlockingDeque;
 
 import javax.swing.SwingUtilities;
 
 import snake.model.Direction;
 import snake.model.Field;
-import snake.model.Snake;
-import snake.model.state.State;
-import snake.model.state.Treat;
 import snake.view.View;
 
 /**
@@ -21,22 +18,21 @@ import snake.view.View;
 public class GameController {
 
     private Field[][] court;
-    private Snake snake;
-    private Queue<Direction> directions;
-    private State currentState;
+    private Player player;
+    private List<Direction> directions;
+    private boolean autoDirection;
     private boolean started;
     private Timer timer;
     private int delay;
 
     public void init(int width, int height) {
-        court = createCourt(width, height);
-        snake = new Snake();
-        snake.append(3);
-        directions = new LinkedBlockingDeque<>();
-        currentState = new Treat().proceed(court, snake, null);
+        player = new Player();
+        court = player.introduce(createCourt(width, height));
+        directions = new LinkedList<>();
+        autoDirection = false;
         started = false;
-        timer = new Timer();
-        delay = 70;
+        timer = null;
+        delay = 80;
     }
 
     private Field[][] createCourt(int x, int y) {
@@ -53,67 +49,35 @@ public class GameController {
         return court;
     }
 
-    public Snake getSnake() {
-        return snake;
-    }
-
     public void turn(Direction direction) {
-	if (directions.isEmpty() || !directions.peek().isOpposite(direction)) {
-	    directions.add(direction);
-	}
+        if (!directions.isEmpty() && directions.get(directions.size() - 1).isOpposite(direction)) {
+            return;
+        }
+        if (autoDirection) {
+            directions.clear();
+        }
+        directions.add(direction);
+        autoDirection = false;
     }
 
     public void start(final View view) {
         started = true;
-        proceed(view);
-    }
-
-    private void proceed(View view) {
-        view.updateScene();
-        if (isStarted() && isInProgress()) {
-            if (currentState.isFastForward()) {
-                proceedFastForward(view);
-            } else {
-                proceedWait(view);
-            }
-        }
-    }
-
-    private void proceedFastForward(final View view) {
-        while (currentState.isFastForward()) {
-            currentState = currentState.proceed(court, snake, getDirection());
-            proceed(view);
-        }
+        timer = new Timer("Snake-timer", true);
+        scheduleTimer(view);
     }
 
     private Direction getDirection() {
-	Direction direction = directions.poll();
-	if(directions.isEmpty())
-	    directions.add(direction);
-	return direction;
-    }
-
-    private void proceedWait(final View view) {
-        timer.schedule(new TimerTask() {
-            @Override
-            public void run() {
-                try {
-                    SwingUtilities.invokeAndWait(new Runnable() {
-                        @Override
-                        public void run() {
-                            currentState = currentState.proceed(court, snake, getDirection());
-                            proceed(view);
-                        }
-                    });
-                } catch (InvocationTargetException | InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-        }, delay);
+        Direction direction = directions.get(0);
+        directions.remove(0);
+        if (directions.isEmpty()) {
+            directions.add(direction);
+            autoDirection = true;
+        }
+        return direction;
     }
 
     public boolean isInProgress() {
-        return currentState.isInProgress();
+        return player.isAlive();
     }
 
     public boolean isStarted() {
@@ -121,11 +85,42 @@ public class GameController {
     }
 
     public void togglePause(View view) {
-        if (started) {
-            started = false;
-        } else {
-            start(view);
+        if (player.isAlive()) {
+            if (started) {
+                pause();
+            } else {
+                start(view);
+            }
         }
+    }
+
+    private void scheduleTimer(final View view) {
+        timer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                try {
+                    SwingUtilities.invokeAndWait(new Runnable() {
+                        @Override
+                        public void run() {
+                            if (started && player.isAlive()) {
+                                court = player.tick(court, getDirection());
+                            } else {
+                                timer.cancel();
+                            }
+                            view.updateScene();
+                        }
+                    });
+                } catch (InvocationTargetException | InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }, delay, delay);
+    }
+
+    private void pause() {
+        timer.cancel();
+        timer.purge();
+        started = false;
     }
     
 }
